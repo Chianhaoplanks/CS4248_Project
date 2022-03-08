@@ -49,7 +49,7 @@ if __name__ == "__main__":
     y_train = train['Score']
 
     y_train = restrict_labels(y_train)
-    model = Pipeline([('vec', TfidfVectorizer()), ('mnb', BernoulliNB())])
+    model = Pipeline([('vec', TfidfVectorizer()), ('mnb', LogisticRegression(max_iter=2000))])
 
     train_model(model, x_train, y_train)
     y_pred = predict(model, x_train)
@@ -65,6 +65,6 @@ if __name__ == "__main__":
     y_pred = predict(model, x_test)
 
     score = f1_score(y_test, y_pred, average='macro')
-    print('score on validation for test set = {}'.format(score))  # 0.432353 match with test data
+    print('score on validation for test set = {}'.format(score))  # 0.39726 match with test data
 
 
