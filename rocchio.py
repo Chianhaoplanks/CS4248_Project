@@ -1,19 +1,12 @@
 import pandas as pd
 
 from sklearn.metrics import f1_score
-from sklearn.metrics import recall_score
-from sklearn.metrics import precision_score
 
 from sklearn.pipeline import Pipeline
-from sklearn.naive_bayes import MultinomialNB
-from sklearn.naive_bayes import BernoulliNB
 from sklearn.feature_extraction.text import TfidfVectorizer
-
-from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.feature_extraction.text import TfidfTransformer
+from sklearn.neighbors._nearest_centroid import NearestCentroid
 
 from sklearn.linear_model import LogisticRegression
-from nltk.stem.porter import PorterStemmer
 
 def restrict_labels(labels):
     restricted_labels = []
@@ -53,38 +46,28 @@ def predict(model, X_test):
     return labels
 
 
-def tokenizer_porter(text):
-    porter = PorterStemmer()
-    return [porter.stem(word) for word in text.split()]
-
-
 if __name__ == "__main__":
     train = pd.read_csv('aclImdb/train_collated.csv')
     x_train = train['Text']
     y_train = train['Score']
 
     y_train = restrict_labels(y_train)
-    # model = Pipeline([('vec', TfidfVectorizer()), ('mnb', BernoulliNB())])
-    model = Pipeline([('vec', CountVectorizer(lowercase=True, tokenizer=tokenizer_porter)), ('tfidf', TfidfTransformer()), ('mnb', BernoulliNB())])
+    model = Pipeline([('vec', TfidfVectorizer()), ('clf', NearestCentroid())])
 
     train_model(model, x_train, y_train)
     y_pred = predict(model, x_train)
 
-    precision = precision_score(y_train, y_pred)
-    recall = recall_score(y_train, y_pred)
-    score = f1_score(y_train, y_pred)
-    print('score on validation for training set: recall=', recall, " precision=", precision, " f1-score=", score)
+    score = f1_score(y_train, y_pred, average='macro')
+    print('score on validation for training set = {}'.format(score))
 
     test = pd.read_csv('aclImdb/test_collated.csv')
     x_test = test['Text']
     y_test = test['Score']
-    y_test = define_labels_with_threshold(y_test)
 
+    y_test = define_labels_with_threshold(y_test)
     y_pred = predict(model, x_test)
 
-    precision = precision_score(y_test, y_pred)
-    recall = recall_score(y_test, y_pred)
-    score = f1_score(y_test, y_pred)
-    print('score on validation for test set: recall =', recall, " precision =", precision, " f1-score =", score)  # 0.432353 match with test data
+    score = f1_score(y_test, y_pred, average='macro')
+    print('score on validation for test set = {}'.format(score))  # 0.432353 match with test data
 
 
