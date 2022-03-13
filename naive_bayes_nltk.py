@@ -1,3 +1,6 @@
+import string
+
+import nltk
 import pandas as pd
 
 from sklearn.metrics import f1_score
@@ -14,6 +17,12 @@ from sklearn.feature_extraction.text import TfidfTransformer
 
 from sklearn.linear_model import LogisticRegression
 from nltk.stem.porter import PorterStemmer
+
+from nltk.corpus import stopwords
+from nltk import word_tokenize
+from nltk.stem import WordNetLemmatizer
+from nltk.corpus import wordnet
+
 
 def restrict_labels(labels):
     restricted_labels = []
@@ -38,10 +47,6 @@ def define_labels_with_threshold(labels, threshold=6.5):
     return defined_labels
 
 
-def process_data(data):
-    pass
-
-
 def train_model(model, X_train, y_train):
     ''' TODO: train your model based on the training data '''
     model.fit(X_train, y_train)
@@ -53,9 +58,40 @@ def predict(model, X_test):
     return labels
 
 
-def tokenizer_porter(text):
-    porter = PorterStemmer()
-    return [porter.stem(word) for word in text.split()]
+def pos_tagger(nltk_tag):
+    if nltk_tag.startswith('J'):
+        return wordnet.ADJ
+    elif nltk_tag.startswith('V'):
+        return wordnet.VERB
+    elif nltk_tag.startswith('N'):
+        return wordnet.NOUN
+    elif nltk_tag.startswith('R'):
+        return wordnet.ADV
+    else:
+        return None
+
+
+def nltk_tokenizer(text):
+    stop_words = set(stopwords.words('english'))
+    tokens = word_tokenize(text)
+    token_tags = nltk.pos_tag(tokens)
+    punctuations = string.punctuation
+    stemmer = PorterStemmer()
+
+    processed_text = []
+    for word, tag in token_tags:
+        if word in stop_words or word in punctuations:
+            continue
+
+        if tag == 'NNP' or tag == 'NNPS':
+            processed_text.append(word)
+        else:
+            word = word.lower()
+            word = stemmer.stem(word)
+            processed_text.append(word)
+
+    tokens = " ".join([i for i in processed_text])
+    return tokens
 
 
 if __name__ == "__main__":
@@ -64,9 +100,10 @@ if __name__ == "__main__":
     y_train = train['Score']
 
     y_train = restrict_labels(y_train)
-    # model = Pipeline([('vec', TfidfVectorizer()), ('mnb', BernoulliNB())])
-    model = Pipeline([('vec', CountVectorizer(lowercase=True, tokenizer=tokenizer_porter)), ('tfidf', TfidfTransformer()), ('mnb', BernoulliNB())])
-
+    # model = Pipeline([('vec', CountVectorizer(lowercase=False, tokenizer=spacy_tokenizer)), ('tfidf', TfidfTransformer()), ('mnb', BernoulliNB())])
+    model = Pipeline(
+        [('vec', TfidfVectorizer(lowercase=False, tokenizer=nltk_tokenizer)),
+         ('mnb', BernoulliNB())])
     train_model(model, x_train, y_train)
     y_pred = predict(model, x_train)
 
@@ -86,5 +123,4 @@ if __name__ == "__main__":
     recall = recall_score(y_test, y_pred)
     score = f1_score(y_test, y_pred)
     print('score on validation for test set: recall =', recall, " precision =", precision, " f1-score =", score)  # 0.432353 match with test data
-
 

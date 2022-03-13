@@ -71,3 +71,15 @@ if __name__ == "__main__":
     print('score on validation for test set = {}'.format(score))  # 0.432353 match with test data
 
 
+def spacy_tokenizer(text):
+    tokens = []
+    for token in nlp(text):
+        if token.is_stop or token.is_punct:
+            continue
+
+        if token.pos_ == "PROPN":
+            tokens.append(token.text)
+        else:
+            tokens.append(token.lower_)
+
+    return tokens
