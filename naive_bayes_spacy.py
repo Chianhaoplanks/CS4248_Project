@@ -55,16 +55,15 @@ def predict(model, X_test):
     return labels
 
 
-nlp = en_core_web_sm.load()
+nlp = spacy.load('en_core_web_sm', disable=["ner", "parser"])
+lemmatizer = nlp.get_pipe("lemmatizer")
 punctuations = string.punctuation
 stopwords = list(STOP_WORDS)
 
-
-def spacy_tokenizer(text):
-    tokens = nlp(text)
-    tokens = [word.lemma_.lower().strip() if word.lemma_ != "-PRON-" else word.lower_ for word in tokens]
-    tokens = [word for word in tokens if word not in stopwords and word not in punctuations]
-    tokens = " ".join([i for i in tokens])
+def tokenize(text):
+    tokens = []
+    for token in nlp(text):
+        tokens.append(token.lower_)
     return tokens
 
 
@@ -76,7 +75,7 @@ if __name__ == "__main__":
     y_train = restrict_labels(y_train)
     # model = Pipeline([('vec', CountVectorizer(lowercase=False, tokenizer=spacy_tokenizer)), ('tfidf', TfidfTransformer()), ('mnb', BernoulliNB())])
     model = Pipeline(
-        [('vec', TfidfVectorizer(lowercase=False, tokenizer=spacy_tokenizer)),
+        [('vec', TfidfVectorizer(lowercase=False, tokenizer=tokenize)),
          ('mnb', BernoulliNB())])
     train_model(model, x_train, y_train)
     y_pred = predict(model, x_train)
