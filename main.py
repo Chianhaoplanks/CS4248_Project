@@ -56,7 +56,6 @@ if __name__ == "__main__":
     y_train_bal = train_bal['Score']
     print(train_bal.value_counts('Score'))
 
-    # model = Pipeline([('vec', CountVectorizer(lowercase=False, tokenizer=spacy_tokenizer)), ('tfidf', TfidfTransformer()), ('mnb', BernoulliNB())])
     model = Pipeline([
         ('vec', TfidfVectorizer(lowercase=False, tokenizer=tokenize, ngram_range=(1, 2))),
         ('mnb', LogisticRegression(max_iter=5000))
