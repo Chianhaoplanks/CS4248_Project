@@ -1,2 +1,4 @@
 pandas
-spacy[cuda115]
+nltk
+sklearn
+imblearn
