@@ -1,40 +1,26 @@
 import string
+import re
 
 import pandas as pd
 import spacy
-import en_core_web_sm
 from spacy.lang.en.stop_words import STOP_WORDS
-
-from sklearn.metrics import f1_score
-from sklearn.metrics import recall_score
-from sklearn.metrics import precision_score
-
-from sklearn.pipeline import Pipeline
-from sklearn.naive_bayes import MultinomialNB
-from sklearn.naive_bayes import BernoulliNB
-from sklearn.feature_extraction.text import TfidfVectorizer
-
-from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.feature_extraction.text import TfidfTransformer
-
-from sklearn.linear_model import LogisticRegression
 from nltk.stem.porter import PorterStemmer
 
+from sklearn.metrics import f1_score, recall_score, precision_score
+from sklearn.pipeline import Pipeline, FeatureUnion
+from sklearn.naive_bayes import MultinomialNB, BernoulliNB
+from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
+from sklearn.linear_model import LogisticRegression
 
-def restrict_labels(labels):
-    restricted_labels = []
-    for score in labels:
-        if score > 0:
-            restricted_labels.append(1)
-        else:
-            restricted_labels.append(0)
-
-    return restricted_labels
+gpu_status = spacy.prefer_gpu()
+nlp = spacy.load('en_core_web_sm', disable=["ner", "parser"])
+lemmatizer = nlp.get_pipe("lemmatizer")
+punctuation = string.punctuation
+stopwords = set(STOP_WORDS)
 
 
-def define_labels_with_threshold(labels, threshold=6.5):
+def restrict_labels(labels, threshold=5):
     defined_labels = []
-
     for score in labels:
         if score < threshold:
             defined_labels.append(0)
@@ -55,28 +41,30 @@ def predict(model, X_test):
     return labels
 
 
-nlp = spacy.load('en_core_web_sm', disable=["ner", "parser"])
-lemmatizer = nlp.get_pipe("lemmatizer")
-punctuations = string.punctuation
-stopwords = list(STOP_WORDS)
-
 def tokenize(text):
     tokens = []
-    for token in nlp(text):
-        tokens.append(token.lower_)
+    # remove HTML tags and stuff
+    regex = re.compile(r"[A-Za-z0-9\-\'\"?!.,:;()]+") # should we remove punct?
+    cleaned_text = ' '.join(re.findall(regex, text.replace("<br", "")))
+    for token in nlp(cleaned_text):
+        tokens.append(token.lemma_.lower())
+    
     return tokens
 
 
 if __name__ == "__main__":
+    print("GPU activated?", gpu_status)
     train = pd.read_csv('aclImdb/train_collated.csv')
     x_train = train['Text']
     y_train = train['Score']
-
     y_train = restrict_labels(y_train)
+
     # model = Pipeline([('vec', CountVectorizer(lowercase=False, tokenizer=spacy_tokenizer)), ('tfidf', TfidfTransformer()), ('mnb', BernoulliNB())])
-    model = Pipeline(
-        [('vec', TfidfVectorizer(lowercase=False, tokenizer=tokenize)),
-         ('mnb', BernoulliNB())])
+    model = Pipeline([
+        ('vec', TfidfVectorizer(lowercase=False, tokenizer=tokenize)),
+        ('mnb', BernoulliNB())
+    ])
+
     train_model(model, x_train, y_train)
     y_pred = predict(model, x_train)
 
@@ -88,8 +76,7 @@ if __name__ == "__main__":
     test = pd.read_csv('aclImdb/test_collated.csv')
     x_test = test['Text']
     y_test = test['Score']
-    y_test = define_labels_with_threshold(y_test)
-
+    y_test = restrict_labels(y_test)
     y_pred = predict(model, x_test)
 
     precision = precision_score(y_test, y_pred)
