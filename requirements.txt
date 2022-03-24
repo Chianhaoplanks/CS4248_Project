@@ -2,3 +2,6 @@ pandas
 nltk
 sklearn
 imblearn
+tensorflow
+keras
+gensim
