@@ -20,7 +20,7 @@ max_features = 6000
 embed_size = 128
 maxlen = 130
 batch_size = 100
-epochs = 5
+epochs = 3
 tokenizer = Tokenizer(num_words=max_features)
 
 def restrict_labels(score, threshold=5):
@@ -45,7 +45,6 @@ def predict(model, X_test):
 if __name__ == "__main__":
     train = pd.read_csv('aclImdb/train_collated.csv')
     train['Text'] = train['Text'].apply(clean_text)
-    print("Done?")
     train['Score'] = train['Score'].apply(restrict_labels)
     train_bal, train_bal['Score'] = sampler.fit_resample(train[['Text']], train['Score']) 
 
@@ -53,8 +52,6 @@ if __name__ == "__main__":
     y_train = train['Score']
     x_train_bal = train_bal['Text']
     y_train_bal = train_bal['Score']
-    #x_train_bal = train['Text']
-    #y_train_bal = train['Score']
     tokenizer.fit_on_texts(x_train_bal)
     list_tokenized_train = tokenizer.texts_to_sequences(x_train_bal)
     x_train_bal = pad_sequences(list_tokenized_train, maxlen=maxlen)
@@ -82,6 +79,6 @@ if __name__ == "__main__":
     precision = precision_score(y_test, y_pred)
     recall = recall_score(y_test, y_pred)
     score = f1_score(y_test, y_pred)
-    print('score on validation for test set: recall =', recall, " precision =", precision, " f1-score =", score)
+    print('score on validation for test set: recall =', recall, "precision =", precision, "f1-score =", score)
     print('confusion matrix:', confusion_matrix(y_test, y_pred))
 
