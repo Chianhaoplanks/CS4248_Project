@@ -2,6 +2,7 @@ import string
 import re
 
 import pandas as pd
+from nltk.stem import WordNetLemmatizer
 from nltk.stem.snowball import SnowballStemmer
 from nltk.corpus import stopwords
 
@@ -12,11 +13,13 @@ from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
 from sklearn.linear_model import LogisticRegression
 
 from imblearn.under_sampling import RandomUnderSampler
+from imblearn.over_sampling import RandomOverSampler
 
 stemmer = SnowballStemmer("english")
+lemmatizer = WordNetLemmatizer()
 punctuation = string.punctuation
 stopwords = set(stopwords.words('english'))
-sampler = RandomUnderSampler(random_state=0)
+undersampler = RandomUnderSampler(random_state=0)
 
 
 def restrict_labels(score, threshold=5):
@@ -40,7 +43,7 @@ def tokenize(text):
     regex = re.compile(r"[A-Za-z0-9\-]+")
     cleaned_text = re.findall(regex, text.replace("<br", ""))
     for token in cleaned_text:
-        tokens.append(stemmer.stem(token).lower())
+        tokens.append(lemmatizer.lemmatize(token).lower())
     
     return tokens
 
@@ -48,13 +51,12 @@ def tokenize(text):
 if __name__ == "__main__":
     train = pd.read_csv('aclImdb/train_collated.csv')
     train['Score'] = train['Score'].apply(restrict_labels)
-    train_bal, train_bal['Score'] = sampler.fit_resample(train[['Text']], train['Score']) 
+    train_bal, train_bal['Score'] = undersampler.fit_resample(train[['Text']], train['Score']) 
 
     x_train = train['Text']
     y_train = train['Score']
     x_train_bal = train_bal['Text']
     y_train_bal = train_bal['Score']
-    print(train_bal.value_counts('Score'))
 
     model = Pipeline([
         ('vec', TfidfVectorizer(lowercase=False, tokenizer=tokenize, ngram_range=(1, 2))),
@@ -67,7 +69,7 @@ if __name__ == "__main__":
     precision = precision_score(y_train, y_pred)
     recall = recall_score(y_train, y_pred)
     score = f1_score(y_train, y_pred)
-    print('score on validation for training set: recall=', recall, " precision=", precision, " f1-score=", score)
+    print('score on validation for training set: recall =', recall, "precision =", precision, "f1-score =", score)
 
     test = pd.read_csv('aclImdb/test_collated.csv')
     test['Score'] = test['Score'].apply(restrict_labels)
@@ -78,5 +80,5 @@ if __name__ == "__main__":
     precision = precision_score(y_test, y_pred)
     recall = recall_score(y_test, y_pred)
     score = f1_score(y_test, y_pred)
-    print('score on validation for test set: recall =', recall, " precision =", precision, " f1-score =", score)  # 0.432353 match with test data
+    print('score on validation for test set: recall =', recall, "precision =", precision, "f1-score =", score)  # 0.432353 match with test data
 
