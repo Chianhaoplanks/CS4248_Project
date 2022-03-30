@@ -46,15 +46,12 @@ if __name__ == "__main__":
     train = pd.read_csv('aclImdb/train_collated.csv')
     train['Text'] = train['Text'].apply(clean_text)
     train['Score'] = train['Score'].apply(restrict_labels)
-    train_bal, train_bal['Score'] = sampler.fit_resample(train[['Text']], train['Score']) 
 
     x_train = train['Text']
     y_train = train['Score']
-    x_train_bal = train_bal['Text']
-    y_train_bal = train_bal['Score']
-    tokenizer.fit_on_texts(x_train_bal)
-    list_tokenized_train = tokenizer.texts_to_sequences(x_train_bal)
-    x_train_bal = pad_sequences(list_tokenized_train, maxlen=maxlen)
+    tokenizer.fit_on_texts(x_train)
+    list_tokenized_train = tokenizer.texts_to_sequences(x_train)
+    x_train = pad_sequences(list_tokenized_train, maxlen=maxlen)
 
     model = Sequential()
     model.add(Embedding(max_features, embed_size))
@@ -64,7 +61,7 @@ if __name__ == "__main__":
     model.add(Dropout(0.05))
     model.add(Dense(1, activation="sigmoid"))
     model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
-    model.fit(x_train_bal, y_train_bal, batch_size=batch_size, epochs=epochs, validation_split=0.2)
+    model.fit(x_train, y_train, batch_size=batch_size, epochs=epochs, validation_split=0.2)
 
     test = pd.read_csv('aclImdb/test_collated.csv')
     test['Text'] = test['Text'].apply(clean_text)
@@ -74,7 +71,7 @@ if __name__ == "__main__":
     x_test = pad_sequences(list_tokenized_test, maxlen=maxlen)
     y_test = test['Score']
     y_pred = model.predict(x_test)
-    y_pred = (y_pred >= 0.5)
+    y_pred = (y_pred > 0.5)
 
     precision = precision_score(y_test, y_pred)
     recall = recall_score(y_test, y_pred)

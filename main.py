@@ -51,19 +51,18 @@ def tokenize(text):
 if __name__ == "__main__":
     train = pd.read_csv('aclImdb/train_collated.csv')
     train['Score'] = train['Score'].apply(restrict_labels)
-    train_bal, train_bal['Score'] = undersampler.fit_resample(train[['Text']], train['Score']) 
+    #train_bal, train_bal['Score'] = undersampler.fit_resample(train[['Text']], train['Score']) 
+    print(train.value_counts('Score'))
 
     x_train = train['Text']
     y_train = train['Score']
-    x_train_bal = train_bal['Text']
-    y_train_bal = train_bal['Score']
 
     model = Pipeline([
         ('vec', TfidfVectorizer(lowercase=False, tokenizer=tokenize, ngram_range=(1, 2))),
         ('mnb', LogisticRegression(max_iter=5000))
     ])
 
-    train_model(model, x_train_bal, y_train_bal)
+    train_model(model, x_train, y_train)
     y_pred = predict(model, x_train)
 
     precision = precision_score(y_train, y_pred)
