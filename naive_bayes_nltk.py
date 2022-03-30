@@ -90,6 +90,7 @@ def nltk_tokenizer(text):
             word = stemmer.stem(word)
             processed_text.append(word)
 
+    return processed_text
     tokens = " ".join([i for i in processed_text])
     return tokens
 
@@ -100,7 +101,6 @@ if __name__ == "__main__":
     y_train = train['Score']
 
     y_train = restrict_labels(y_train)
-    # model = Pipeline([('vec', CountVectorizer(lowercase=False, tokenizer=spacy_tokenizer)), ('tfidf', TfidfTransformer()), ('mnb', BernoulliNB())])
     model = Pipeline(
         [('vec', TfidfVectorizer(lowercase=False, tokenizer=nltk_tokenizer)),
          ('mnb', BernoulliNB())])
