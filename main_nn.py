@@ -11,6 +11,7 @@ from keras.layers import Bidirectional, GlobalMaxPool1D
 from keras.models import Model, Sequential
 from keras.layers import Convolution1D
 from keras.preprocessing.text import Tokenizer
+from keras.metrics import Precision, Recall
 from keras.preprocessing.sequence import pad_sequences
 
 stopwords = set(stopwords.words('english'))
@@ -60,9 +61,9 @@ if __name__ == "__main__":
     model.add(Dense(20, activation="relu"))
     model.add(Dropout(0.05))
     model.add(Dense(1, activation="sigmoid"))
-    model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+    model.compile(loss='binary_crossentropy', optimizer='adam', metrics=[Precision(), Recall()])
     model.fit(x_train, y_train, batch_size=batch_size, epochs=epochs, validation_split=0.2)
-
+    print(model.summary())
     test = pd.read_csv('aclImdb/test_collated.csv')
     test['Text'] = test['Text'].apply(clean_text)
     test['Score'] = test['Score'].apply(restrict_labels)

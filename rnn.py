@@ -20,7 +20,8 @@ def get_metrics(y_true, y_pred):
 def run_nn(X_train, y_train, X_test, y_test, max_words, max_len):
 	model = Sequential()
 	model.add(layers.Embedding(max_words, 20, input_length=max_len))
-	model.add(layers.LSTM(15, dropout=0.5))
+	#model.add(layers.Flatten())
+	model.add(layers.Bidirectional(layers.LSTM(15, dropout=0.5)))
 	model.add(layers.Dense(2, activation='sigmoid'))
 	model.compile(optimizer='rmsprop', loss='binary_crossentropy', metrics=[Precision(), Recall()])
 	print(model.summary())
