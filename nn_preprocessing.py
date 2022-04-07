@@ -14,7 +14,7 @@ from keras.layers import Embedding
 
 
 from rnn import run_nn
-from lg_imbd_dataset import convert_sentiment
+from main_imdb import convert_sentiment
 sampler = RandomUnderSampler(random_state=0)
 ohe = OneHotEncoder()
 
@@ -41,8 +41,8 @@ def simplify_score(score):
 
 
 if __name__ == '__main__':
-	train = pd.read_csv("./aclImdb/train_collated.csv")
-	test = pd.read_csv("IMDB_Dataset.csv")
+	train = pd.read_csv("./Stanford/train_collated.csv")
+	test = pd.read_csv("./IMDb/test.csv")
 	y_train = train['Score'].apply(lambda y : simplify_score(y))
 	X_train, y_train = sampler.fit_resample(train[['Text']], y_train)
 	y = ohe.fit_transform(y_train.values.reshape(-1, 1)).toarray()

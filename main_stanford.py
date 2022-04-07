@@ -7,8 +7,9 @@ from nltk.stem.snowball import SnowballStemmer
 from nltk.corpus import stopwords
 
 from sklearn.metrics import f1_score, recall_score, precision_score
-from sklearn.pipeline import Pipeline, FeatureUnion
+from sklearn.pipeline import Pipeline
 from sklearn.naive_bayes import MultinomialNB, BernoulliNB
+from sklearn.svm import LinearSVC
 from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
 from sklearn.linear_model import LogisticRegression
 
@@ -49,9 +50,8 @@ def tokenize(text):
 
 
 if __name__ == "__main__":
-    train = pd.read_csv('aclImdb/train_collated.csv')
+    train = pd.read_csv('Stanford/train_collated.csv')
     train['Score'] = train['Score'].apply(restrict_labels)
-    #train_bal, train_bal['Score'] = undersampler.fit_resample(train[['Text']], train['Score']) 
     print(train.value_counts('Score'))
 
     x_train = train['Text']
@@ -59,7 +59,7 @@ if __name__ == "__main__":
 
     model = Pipeline([
         ('vec', TfidfVectorizer(lowercase=False, tokenizer=tokenize, ngram_range=(1, 2))),
-        ('mnb', LogisticRegression(max_iter=5000))
+        ('svc', LinearSVC())
     ])
 
     train_model(model, x_train, y_train)
@@ -70,7 +70,7 @@ if __name__ == "__main__":
     score = f1_score(y_train, y_pred)
     print('score on validation for training set: recall =', recall, "precision =", precision, "f1-score =", score)
 
-    test = pd.read_csv('aclImdb/test_collated.csv')
+    test = pd.read_csv('Stanford/test_collated.csv')
     test['Score'] = test['Score'].apply(restrict_labels)
     x_test = test['Text']
     y_test = test['Score']
